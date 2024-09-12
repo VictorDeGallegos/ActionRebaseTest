@@ -1,0 +1,31 @@
+name: Check if branch is up to date with develop
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened]
+
+jobs:
+  check-rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Fetch all branches
+        run: |
+          git fetch --all --prune
+          git checkout origin/develop  # Asegurarse de que la referencia remota de develop esté correcta
+
+      - name: Check if branch is behind develop
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          
+          # Asegura que desarrollamos la comparación con las referencias remotas correctas
+          COMMITS_BEHIND=$(git rev-list --count HEAD..origin/develop)
+
+          if [ "$COMMITS_BEHIND" -ne 0 ]; then
+            echo "Your branch $BRANCH is behind develop by $COMMITS_BEHIND commits. Please rebase."
+            exit 1
+          else
+            echo "Your branch $BRANCH is up to date with develop."
+          fi
